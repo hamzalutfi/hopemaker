@@ -1,24 +1,35 @@
 const mongoose = require("mongoose");
 
 const needSchema = new mongoose.Schema({
-    describtion: {
+    address:{
         type: String,
         required: false,
     },
-    statuss:{
-        type: String,
-        enum: ["pending", "accepted", "rejected"],
-        default: "pending",
-    },
-    img:{
-        type: String,
-        required: false,
-    },
-    user:{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "user",
-    }
-
-})
-const needs= mongoose.model("need", needSchema);
+  title: {
+    type: String,
+    required: true,
+  },
+  describtion: {
+    type: String,
+    required: false,
+  },
+  status: {
+    type: String,
+    enum: ["pending", "accepted", "rejected"],
+    default: "pending",
+  },
+  img: {
+    type: String,
+    required: false,
+  },
+  userDisabled: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "user",
+  },
+  userDoner: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "user",
+  },
+});
+const needs = mongoose.model("need", needSchema);
 module.exports = needs;
