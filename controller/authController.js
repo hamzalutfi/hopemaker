@@ -1,7 +1,7 @@
 const user = require("../models/user");
 const { sendActivationEmail } = require("../utils/SendEmail");
-const { sendResetPasswordEmail } = require("./../utils/SendEmail")
-const jwt=require('jsonwebtoken');
+const { sendResetPasswordEmail } = require("./../utils/SendEmail");
+const jwt = require("jsonwebtoken");
 const { jwtDecode } = require("jwt-decode");
 exports.signup = async (req, res) => {
   try {
@@ -24,29 +24,33 @@ exports.login = async (req, res) => {
     const currentUser = await user
       .findOne({ email })
       .select("+password status");
+    console.log(currentUser);
     if (!currentUser) {
       return res.status(500).send("user not found");
     }
-    const correctPassword = currentUser.correctPassword(
+    const correctPassword = await currentUser.correctPassword(
       password,
       currentUser.password
     );
+    console.log(correctPassword);
     if (!correctPassword) {
       return res.status(500).send("wrong password");
     }
     if (currentUser.status === "inactive") {
       return res.status(500).send("user is inactive");
     }
-    res.send("done");
-    console.log(curUser);
     const userToken = jwt.sign(
       {
-        id: curUser._id,
+        id: currentUser._id,
       },
-      process.env.SECRET_KEY
+      process.env.SECRET_KEY,
+      {
+        expiresIn: 3 * 24 * 60 * 60 * 1000,
+      }
     );
     res.send(userToken);
   } catch (err) {
+    console.log(err);
     res.status(500).send(err);
   }
 };
@@ -137,54 +141,57 @@ exports.resetPassword = async (req, res) => {
     res.status(500).send(e);
   }
 };
-exports.me= async(req,res)=>{
-  const token=req.headers['authorization']
-  const userToken=token.split(" ")[1]
-  const {id}=jwtDecode(userToken)
+exports.me = async (req, res) => {
+  const token = req.headers["authorization"];
+  const userToken = token.split(" ")[1];
+  const { id } = jwtDecode(userToken);
   console.log(id);
   console.log(id);
-  
-  const currenttUser=await user.findOne({_id:id})
-  if(!currenttUser){
-    res.status(500).send("user not found")
+
+  const currenttUser = await user.findOne({ _id: id });
+  if (!currenttUser) {
+    res.status(500).send("user not found");
     return;
   }
-  res.send(currenttUser)
+  res.send(currenttUser);
   //console.log(token)
+};
+
+exports.deleteCurrentUser = async (req, res) => {
+  try {
+    const token = req.headers["authorization"];
+    if (!token) return res.status(401).send("Authorization token missing");
+
+    const userToken = token.split(" ")[1];
+    const { id } = jwtDecode(userToken);
+
+    const deletedUser = await user.findByIdAndDelete(id);
+    if (!deletedUser) return res.status(404).send("User not found");
+
+    res.status(200).send("User deleted successfully");
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Internal server error");
   }
+};
 
-  exports.deleteCurrentUser = async (req, res) => {
-    try {
-      const token = req.headers['authorization'];
-      if (!token) return res.status(401).send("Authorization token missing");
-  
-      const userToken = token.split(" ")[1];
-      const { id } = jwtDecode(userToken);
-  
-      const deletedUser = await user.findByIdAndDelete(id);
-      if (!deletedUser) return res.status(404).send("User not found");
-  
-      res.status(200).send("User deleted successfully");
-    } catch (error) {
-      console.error(error);
-      res.status(500).send("Internal server error");
-    }
-  };
+exports.updateCurrentUser = async (req, res) => {
+  try {
+    const token = req.headers["authorization"];
+    if (!token) return res.status(401).send("Authorization token missing");
 
-  exports.updateCurrentUser = async (req, res) => {
-    try {
-      const token = req.headers['authorization'];
-      if (!token) return res.status(401).send("Authorization token missing");
-  
-      const userToken = token.split(" ")[1];
-      const { id } = jwtDecode(userToken);
-  
-      const updatedUser = await user.findByIdAndUpdate(id, req.body, { new: true, runValidators: true });
-      if (!updatedUser) return res.status(404).send("User not found");
-  
-      res.status(200).json(updatedUser);
-    } catch (error) {
-      console.error(error);
-      res.status(500).send("Internal server error");
-    }
-  };
+    const userToken = token.split(" ")[1];
+    const { id } = jwtDecode(userToken);
+
+    const updatedUser = await user.findByIdAndUpdate(id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+    if (!updatedUser) return res.status(404).send("User not found");
+
+    res.status(200).json(updatedUser);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Internal server error");
+  }
+};
