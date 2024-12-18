@@ -2,45 +2,46 @@ const crypto = require("crypto");
 const mongoose = require("mongoose");
 const validator = require("validator");
 const bcrypt = require("bcryptjs");
-const userSchema = new mongoose.Schema({
-  code: {
-    type: Number,
-  },
-  email: {
-    type: String,
-    required: [true, "user must have email"],
-    unique: [true, "email must be unique"],
-    validate: [validator.isEmail, "please provide correct email"],
-    trim: true,
-  },
-  password: {
-    type: String,
-    required: [true, "user must have password"],
-    minlength: [8, "password length must be at least 8"],
-    select: false, //
-    validate: {
-      validator: function (value) {
-        return /(?=.*[a-zA-Z])(?=.*\d)/.test(value);
-      },
-      message: "password must have at least one letter and one number",
+const userSchema = new mongoose.Schema(
+  {
+    code: {
+      type: Number,
     },
-  },
-  confirmPassword: {
-    type: String,
-    required: true,
-    validate: {
-      validator(value) {
-        return value === this.password;
-      },
-      message: "confirm password must be exactly same as password",
+    email: {
+      type: String,
+      required: [true, "user must have email"],
+      unique: [true, "email must be unique"],
+      validate: [validator.isEmail, "please provide correct email"],
+      trim: true,
     },
-  },
-  role: {
-    type: String,
-    enum: ["donor", "disabeld", "assistant"],
-    default: "disabeld",
-  },
-      invitedBy: {
+    password: {
+      type: String,
+      required: [true, "user must have password"],
+      minlength: [8, "password length must be at least 8"],
+      select: false, //
+      validate: {
+        validator: function (value) {
+          return /(?=.*[a-zA-Z])(?=.*\d)/.test(value);
+        },
+        message: "password must have at least one letter and one number",
+      },
+    },
+    confirmPassword: {
+      type: String,
+      required: true,
+      validate: {
+        validator(value) {
+          return value === this.password;
+        },
+        message: "confirm password must be exactly same as password",
+      },
+    },
+    role: {
+      type: String,
+      enum: ["donor", "disabeld", "assistant"],
+      default: "disabeld",
+    },
+    invitedBy: {
       type: mongoose.SchemaTypes.ObjectId,
       ref: "user",
     },
@@ -50,98 +51,99 @@ const userSchema = new mongoose.Schema({
     passwordResetToken: String,
     passwordResetExpire: Date,
 
-  donor: {
-    //from here
-    name: {
-      type: String,
-      //required: [true, "user must have name"],
+    donor: {
+      //from here
+      name: {
+        type: String,
+        //required: [true, "user must have name"],
+      },
+      age: {
+        type: Number,
+        // required: true,
+      },
+      img: {
+        type: String,
+        //required: true,
+      },
+      address: {
+        type: String,
+        //required: true,
+      },
+      phone: {
+        type: Number,
+        //required: true,
+      },
+      gender: {
+        type: String,
+        //required: true,
+      }, //to here
     },
-    age: {
-      type: Number,
-     // required: true,
+    disabeld: {
+      //from here
+      name: {
+        type: String,
+        //required: [true, "user must have name"],
+      },
+      age: {
+        type: Number,
+        // required: true,
+      },
+      img: {
+        type: String,
+        // required: false,
+      },
+      address: {
+        type: String,
+        //required: false,
+      },
+      phone: {
+        type: Number,
+        // required: false,
+      },
+      gender: {
+        type: String,
+        //required: false,
+      }, //to here
     },
-    img: {
-      type: String,
-      //required: true,
+    assistant: {
+      //from here
+      name: {
+        type: String,
+        //  required: true,
+      },
+      age: {
+        type: Number,
+        //required: true,
+      },
+      img: {
+        type: String,
+        // required: [true, "user must have name"],
+      },
+      address: {
+        type: String,
+        // required: true,
+      },
+      phone: {
+        type: Number,
+        //required: true,
+      },
+      gender: {
+        type: String,
+        //required: true,
+      },
+      pass_id: {
+        type: String,
+        // required: true,
+      },
+      pass_img: {
+        type: String,
+        //required: true,
+      },
     },
-    address: {
-      type: String,
-      //required: true,
-    },
-    phone: {
-      type: Number,
-      //required: true,
-    },
-    gender: {
-      type: String,
-      //required: true,
-    }, //to here
+    //to here
   },
-  disabeld: {
-    //from here
-    name: {
-      type: String,
-      //required: [true, "user must have name"],
-    },
-    age: {
-      type: Number,
-     // required: true,
-    },
-    img: {
-      type: String,
-     // required: false,
-    },
-    address: {
-      type: String,
-      //required: false,
-    },
-    phone: {
-      type: Number,
-     // required: false,
-    },
-    gender: {
-      type: String,
-      //required: false,
-    }, //to here
-  },
-  assistant: {
-    //from here
-    name: {
-      type: String,
-    //  required: true,
-    },
-    age: {
-      type: Number,
-      //required: true,
-    },
-    img: {
-      type: String,
-     // required: [true, "user must have name"],
-    },
-    address: {
-      type: String,
-     // required: true,
-    },
-    phone: {
-      type: Number,
-      //required: true,
-    },
-    gender: {
-      type: String,
-      //required: true,
-    },
-    pass_id: {
-      type: String,
-     // required: true,
-    },
-    pass_img: {
-      type: String,
-      //required: true,
-    },
-    
-  },
-   //to here
-},{ timestamps: true });
+  { timestamps: true }
+);
 userSchema.pre("save", async function (next) {
   if (this.isNew) {
     const highestId = await this.constructor.findOne().sort("-code").exec();
@@ -195,7 +197,7 @@ userSchema.methods.checkChangePassword = function (JWTTimestamp) {
 };
 
 userSchema.methods.createPasswordRestToken = function () {
-  const resetToken = crypto.randomBytes(3).toString("hex");
+  const resetToken = Math.floor(100000 + Math.random() * 900000).toString();
   this.passwordResetToken = crypto
     .createHash("sha256")
     .update(resetToken)
@@ -206,7 +208,7 @@ userSchema.methods.createPasswordRestToken = function () {
 };
 
 userSchema.methods.createActivationToken = function () {
-  const activateToken = crypto.randomBytes(3).toString("hex");
+  const activateToken = Math.floor(100000 + Math.random() * 900000).toString();
   this.activationToken = crypto
     .createHash("sha256")
     .update(activateToken)
@@ -225,7 +227,6 @@ userSchema.methods.updateCurrentPassword = function (newPassword) {
 };
 const Users = mongoose.model("user", userSchema);
 module.exports = Users;
-
 
 ////// import mongoose driver
 

@@ -2,11 +2,14 @@ const user = require("../models/user");
 const { sendActivationEmail } = require("../utils/SendEmail");
 const { sendResetPasswordEmail } = require("./../utils/SendEmail");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 const { jwtDecode } = require("jwt-decode");
 exports.signup = async (req, res) => {
   try {
     const createdUser = await user.create(req.body); //create user from the info in req.body
+    console.log("createdUser", createdUser);
     const userToken = await createdUser.createActivationToken(); //HERE we create the activation token
+    console.log("userToken", userToken);
     await sendActivationEmail({
       email: createdUser.email,
       token: userToken,
@@ -57,7 +60,10 @@ exports.login = async (req, res) => {
 exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
+    
+    
     const curruntUser = await user.findOne({ email });
+    
     if (!curruntUser) {
       res.status(500).send("there is no user found");
       return;
@@ -67,9 +73,11 @@ exports.forgotPassword = async (req, res) => {
       email: curruntUser.email,
       restToken: userToken,
     });
+    console.log(userToken);
     curruntUser.save({ validateBeforeSave: false });
     res.send("done");
   } catch (e) {
+    console.log(e)
     res.status(500).send(e);
   }
 };
@@ -96,17 +104,25 @@ exports.resendactivationCode = async (req, res) => {
   }
 };
 
-exports.activateAccount = async (req, res) => {
+exports.activate = async (req, res) => {
   try {
     const { email, token } = req.body;
+    const updatedToken = token.join("");
     const currUser = await user.findOne({ email });
-
+    console.log(req.body);
+    console.log(currUser);
+    console.log(updatedToken);
     if (!currUser) {
       res.status(500).send("the user does not exist");
       return;
     }
 
-    const tokenHashed = crypto.createHash("sha256").update(token).digest("hex");
+    const tokenHashed = crypto
+      .createHash("sha256")
+      .update(updatedToken)
+      .digest("hex");
+    console.log(tokenHashed);
+    console.log(currUser.activationToken);
     if (currUser.activationToken !== tokenHashed) {
       res.status(500).send("the token does not match");
       return;
@@ -121,12 +137,16 @@ exports.activateAccount = async (req, res) => {
 exports.resetPassword = async (req, res) => {
   try {
     const { email, token, password, confirmPassword } = req.body;
+    console.log("req.body", req.body);
     const currrUser = await user.findOne({ email }).select("+password");
+    console.log("currrUser", currrUser);
     if (!currrUser) {
       res.status(500).send("there is no user found");
       return;
     }
     const newToken = crypto.createHash("sha256").update(token).digest("hex");
+    console.log("newToken", newToken);
+    console.log("currrUser.passwordResetToken", currrUser.passwordResetToken);
     if (currrUser.passwordResetToken !== newToken) {
       res.status(500).send("token not match");
       return;
