@@ -1,15 +1,29 @@
 const mongoose = require("mongoose");
 
 const needSchema = new mongoose.Schema({
-    address:{
-        type: String,
-        required: false,
-    },
-  title: {
+  title: { type: String, required: true },
+  image: {
     type: String,
-    required: true,
+    required: false,
   },
-  describtion: {
+  file: {
+    type: String,
+    required: false,
+  },
+  disabilityType: {
+    type: String,
+    required: false,
+  },
+  donationType: {
+    type: String,
+    required: false,
+  },
+
+  caseDescription: {
+    type: String,
+    required: false,
+  },
+  needDescription: {
     type: String,
     required: false,
   },
@@ -17,10 +31,6 @@ const needSchema = new mongoose.Schema({
     type: String,
     enum: ["pending", "accepted", "rejected"],
     default: "pending",
-  },
-  img: {
-    type: String,
-    required: false,
   },
   userDisabled: {
     type: mongoose.Schema.Types.ObjectId,

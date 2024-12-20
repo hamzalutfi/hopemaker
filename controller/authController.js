@@ -3,6 +3,7 @@ const { sendActivationEmail } = require("../utils/SendEmail");
 const { sendResetPasswordEmail } = require("./../utils/SendEmail");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
+const bcrypt = require("bcryptjs");
 const { jwtDecode } = require("jwt-decode");
 exports.signup = async (req, res) => {
   try {
@@ -60,10 +61,9 @@ exports.login = async (req, res) => {
 exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
-    
-    
+
     const curruntUser = await user.findOne({ email });
-    
+
     if (!curruntUser) {
       res.status(500).send("there is no user found");
       return;
@@ -77,7 +77,7 @@ exports.forgotPassword = async (req, res) => {
     curruntUser.save({ validateBeforeSave: false });
     res.send("done");
   } catch (e) {
-    console.log(e)
+    console.log(e);
     res.status(500).send(e);
   }
 };
@@ -149,6 +149,31 @@ exports.resetPassword = async (req, res) => {
     console.log("currrUser.passwordResetToken", currrUser.passwordResetToken);
     if (currrUser.passwordResetToken !== newToken) {
       res.status(500).send("token not match");
+      return;
+    }
+
+    currrUser.password = password;
+    currrUser.confirmPassword = confirmPassword;
+
+    currrUser.save();
+    res.send(currrUser.password);
+  } catch (e) {
+    res.status(500).send(e);
+  }
+};
+
+exports.changePassword = async (req, res) => {
+  try {
+    const { _id } = req.user;
+    const { oldPassword, password, confirmPassword } = req.body;
+
+    const currrUser = await user.findById(_id).select("+password");
+    if (!currrUser) {
+      res.status(500).send("there is no user found");
+      return;
+    }
+    if (!bcrypt.compareSync(oldPassword, currrUser.password)) {
+      res.status(500).send("old password not match");
       return;
     }
 
