@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 const { jwtDecode } = require("jwt-decode");
+const _ = require("lodash");
 exports.signup = async (req, res) => {
   try {
     const createdUser = await user.create(req.body); //create user from the info in req.body
@@ -188,7 +189,7 @@ exports.changePassword = async (req, res) => {
 };
 exports.me = async (req, res) => {
   const token = req.headers["authorization"];
-  const userToken = token.split(" ")[1];
+  const userToken = token?.split(" ")[1];
   const { id } = jwtDecode(userToken);
   console.log(id);
   console.log(id);
@@ -227,11 +228,19 @@ exports.updateCurrentUser = async (req, res) => {
 
     const userToken = token.split(" ")[1];
     const { id } = jwtDecode(userToken);
-
-    const updatedUser = await user.findByIdAndUpdate(id, req.body, {
-      new: true,
-      runValidators: true,
-    });
+    const info = req.body;
+    console.log(info);
+    console.log(req.files);
+    if (req.files) {
+      const { files } = req;
+      files.forEach((file) => {
+        const normalizedFieldname = file.fieldname.replace(/\[(\w+)\]/g, ".$1");
+        _.set(info, normalizedFieldname, file.path);
+      });
+    }
+    console.log(info);
+    const updatedUser = await user.findByIdAndUpdate(id, { $set: info });
+    console.log(updatedUser);
     if (!updatedUser) return res.status(404).send("User not found");
 
     res.status(200).json(updatedUser);

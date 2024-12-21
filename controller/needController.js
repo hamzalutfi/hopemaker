@@ -1,4 +1,5 @@
 const need = require("../models/need");
+const user = require("../models/user");
 
 exports.getAllCases = async (req, res) => {
   try {
@@ -11,9 +12,8 @@ exports.getAllCases = async (req, res) => {
 
 exports.createCase = async (req, res) => {
   try {
+    const { _id } = req.user;
     const info = req.body;
-    console.log(info);
-    console.log(info);
     if (!info.title) {
       return res.status(500).send("title and description are required");
     }
@@ -31,7 +31,25 @@ exports.createCase = async (req, res) => {
         info.image = file2?.path;
       }
     }
-    const cases = await need.create(info);
+    const existPandingCase = await need
+      .findOne({
+        userDisabled: _id,
+        status: "pending",
+      })
+      .select("_id");
+    if (existPandingCase) {
+      return res.status(500).send("you have a panding case");
+    }
+    const userData = await user.findById(_id);
+    if (
+      !userData?.disabeld?.medicalReport ||
+      !userData?.disabeld?.name ||
+      !userData?.disabeld?.phone
+    ) {
+      return res.status(500).send("you have to complete your profile first");
+    }
+
+    const cases = await need.create({ ...info, userDisabled: _id });
     res.status(200).json(cases);
   } catch (error) {
     console.log("errorsssssssssss", error);

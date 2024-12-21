@@ -52,31 +52,45 @@ const userSchema = new mongoose.Schema(
     passwordResetExpire: Date,
 
     donor: {
-      //from here
       name: {
         type: String,
         //required: [true, "user must have name"],
       },
-      age: {
-        type: Number,
+      birthDate: {
+        type: Date,
         // required: true,
       },
       img: {
         type: String,
-        //required: true,
+        // required: false,
+      },
+      donationPrivacy: {
+        type: String,
+        // required: false,
       },
       address: {
         type: String,
-        //required: true,
+        //required: false,
       },
       phone: {
-        type: Number,
-        //required: true,
+        type: String,
+        // required: false,
       },
       gender: {
         type: String,
-        //required: true,
-      }, //to here
+      },
+      country: {
+        type: String,
+      },
+      city: {
+        type: String,
+      },
+      showName: {
+        type: String,
+      },
+      donationType: {
+        type: String,
+      },
     },
     disabeld: {
       //from here
@@ -84,8 +98,8 @@ const userSchema = new mongoose.Schema(
         type: String,
         //required: [true, "user must have name"],
       },
-      age: {
-        type: Number,
+      birthDate: {
+        type: Date,
         // required: true,
       },
       img: {
@@ -97,13 +111,30 @@ const userSchema = new mongoose.Schema(
         //required: false,
       },
       phone: {
-        type: Number,
+        type: String,
         // required: false,
       },
       gender: {
         type: String,
-        //required: false,
-      }, //to here
+      },
+      country: {
+        type: String,
+      },
+      city: {
+        type: String,
+      },
+      disabilityType: {
+        type: String,
+      },
+      medicalReport: {
+        type: String,
+      },
+      needType: {
+        type: String,
+      },
+      caseDescription: {
+        type: String,
+      },
     },
     assistant: {
       //from here
@@ -111,8 +142,8 @@ const userSchema = new mongoose.Schema(
         type: String,
         //  required: true,
       },
-      age: {
-        type: Number,
+      birthDate: {
+        type: Date,
         //required: true,
       },
       img: {
@@ -124,7 +155,7 @@ const userSchema = new mongoose.Schema(
         // required: true,
       },
       phone: {
-        type: Number,
+        type: String,
         //required: true,
       },
       gender: {
@@ -135,9 +166,21 @@ const userSchema = new mongoose.Schema(
         type: String,
         // required: true,
       },
+      country: {
+        type: String,
+        // required: true,
+      },
+      city: {
+        type: String,
+      },
       pass_img: {
         type: String,
-        //required: true,
+      },
+      relation: {
+        type: String,
+      },
+      idDocument: {
+        type: String,
       },
     },
     //to here
