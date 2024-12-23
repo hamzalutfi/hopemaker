@@ -3,7 +3,7 @@ const user = require("../models/user");
 
 exports.getAllCases = async (req, res) => {
   try {
-    const cases = await need.find();
+    const cases = await need.find().populate("userDisabled");
     res.status(200).json(cases);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -17,8 +17,9 @@ exports.createCase = async (req, res) => {
     if (!info.title) {
       return res.status(500).send("title and description are required");
     }
+    console.log(req.body);
+    console.log(req.files);
     if (req.files) {
-      console.log(req.files);
       const [file1, file2] = req.files;
       if (file1?.fieldname === "file") {
         info.file = file1?.path;

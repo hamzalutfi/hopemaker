@@ -7,8 +7,8 @@ const bearer = require("../middle/middle");
 router.get("/cases", needController.getAllCases);
 router.post(
   "/cases",
-  bearer,
   upload("uploads/needs"),
+  bearer,
   needController.createCase
 );
 router.get("/cases/:id", needController.getCaseById);

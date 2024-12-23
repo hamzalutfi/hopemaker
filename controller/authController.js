@@ -6,10 +6,27 @@ const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 const { jwtDecode } = require("jwt-decode");
 const _ = require("lodash");
+const Joi = require("joi");
+
+const signupSchema = Joi.object({
+  email: Joi.string().email().required(),
+  password: Joi.string().min(6).required(),
+  confirmPassword: Joi.string().valid(Joi.ref('password'),"confirm password must be exactly same as password").required(),
+  role: Joi.string().valid('donor', 'disabeld', 'assistant').required(), // Example roles
+});
 exports.signup = async (req, res) => {
+  
   try {
-    const createdUser = await user.create(req.body); //create user from the info in req.body
-    console.log("createdUser", createdUser);
+    const { error } = signupSchema.validate(req.body);
+    if (error) {
+      return res.status(400).send({ error: error.details[0].message });
+    }
+    const createdUser = await user.create({ email: req.body.email,
+      password: req.body.password,
+      confirmPassword: req.body.confirmPassword,
+      role: req.body.role,});
+    console.log("req.body",req.body) //create user from the info in req.body
+    
     const userToken = await createdUser.createActivationToken(); //HERE we create the activation token
     console.log("userToken", userToken);
     await sendActivationEmail({
@@ -23,8 +40,16 @@ exports.signup = async (req, res) => {
     res.status(500).send(err);
   }
 };
+const loginSchema = Joi.object({
+  email: Joi.string().email().required(),
+  password: Joi.string().min(6).required(), // Adjust password length as needed
+});
 exports.login = async (req, res) => {
   try {
+    const { error } = loginSchema.validate(req.body);
+    if (error) {
+      return res.status(400).send({ error: error.details[0].message });
+    }
     const { email, password } = req.body;
     const currentUser = await user
       .findOne({ email })
@@ -162,9 +187,28 @@ exports.resetPassword = async (req, res) => {
     res.status(500).send(e);
   }
 };
-
+// Validation schema for password change
+const changePasswordSchema = Joi.object({
+  oldPassword: Joi.string().min(8).required().messages({
+    'string.min': 'Old password must be at least 8 characters long.',
+    'any.required': 'Old password is required.',
+  }),
+  password: Joi.string().min(8).required().pattern(/(?=.*[a-zA-Z])(?=.*\d)/).messages({
+    'string.min': 'New password must be at least 8 characters long.',
+    'string.pattern.base': 'New password must contain at least one letter and one number.',
+    'any.required': 'New password is required.',
+  }),
+  confirmPassword: Joi.string().valid(Joi.ref('password')).required().messages({
+    'any.only': 'Confirm password must match the new password.',
+    'any.required': 'Confirm password is required.',
+  }),
+});
 exports.changePassword = async (req, res) => {
   try {
+    const { error } = changePasswordSchema.validate(req.body);
+    if (error) {
+      return res.status(400).send({ error: error.details[0].message });
+    }
     const { _id } = req.user;
     const { oldPassword, password, confirmPassword } = req.body;
 
@@ -220,12 +264,78 @@ exports.deleteCurrentUser = async (req, res) => {
     res.status(500).send("Internal server error");
   }
 };
+const updateUserSchema = Joi.object({
+  
+  donor: Joi.object({
+    name: Joi.string(),
+    birthDate: Joi.date(),
+    img: Joi.string(),
+    donationPrivacy: Joi.string(),
+    address: Joi.string(),
+    phone: Joi.string(),
+    gender: Joi.string(),
+    country: Joi.string(),
+    city: Joi.string(),
+    showName: Joi.string(),
+    donationType: Joi.string(),
+  }).optional(),
+  // Fields for disabled
+  disabeld: Joi.object({
+    name: Joi.string(),
+    birthDate: Joi.date(),
+    img: Joi.string(),
+    address: Joi.string(),
+    phone: Joi.string(),
+    gender: Joi.string(),
+    country: Joi.string(),
+    city: Joi.string(),
+    disabilityType: Joi.string(),
+    medicalReport: Joi.string(),
+    needType: Joi.string(),
+    caseDescription: Joi.string(),
+  }).optional(),
+  // Fields for assistant
+  assistant: Joi.object({
+    name: Joi.string(),
+    birthDate: Joi.date(),
+    img: Joi.string(),
+    address: Joi.string(),
+    phone: Joi.string(),
+    gender: Joi.string(),
+    pass_id: Joi.string(),
+    country: Joi.string(),
+    city: Joi.string(),
+    pass_img: Joi.string(),
+    relation: Joi.string(),
+    idDocument: Joi.string(),
+  }).optional(),
+  _id: Joi.string(),
+  email: Joi.string(),
+  role: Joi.string(),
+  createdAt: Joi.date(),
+  updatedAt: Joi.date(),
+  code: Joi.number(),
+  __v: Joi.number(),
+  invitedBy: Joi.string(),
+  activationToken: Joi.string(),
+  activationTokenExpire: Joi.date(),
+  passwordChangeAt: Joi.date(),
+  passwordResetToken: Joi.string(),
+  passwordResetExpire: Joi.date(),
+
+}).messages({
+  'object.base': 'Invalid input format.',
+});
+
 
 exports.updateCurrentUser = async (req, res) => {
   try {
     const token = req.headers["authorization"];
     if (!token) return res.status(401).send("Authorization token missing");
-
+    const { error } = updateUserSchema.validate(req.body);
+    if (error) {
+      return res.status(400).send({ error: error.details[0].message });
+    }
     const userToken = token.split(" ")[1];
     const { id } = jwtDecode(userToken);
     const info = req.body;
